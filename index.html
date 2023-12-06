@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>バカチンISS</title>
+    <link rel="stylesheet" href="./css/reset.css">
+    <link rel="stylesheet" href="./css/style.css">
+    <link href="https://fonts.googleapis.com/earlyaccess/nicomoji.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+</head>
+
+<body>
+
+    <!-- ログイン・新規登録フォーム -->
+    <div id="login-container" style="display: none;">
+        <h2>💀バカチン機密情報に接続💀</h2>
+        <input type="email" id="login-email" placeholder="メールアドレス">
+        <input type="password" id="login-password" placeholder="パスワード">
+        <button id="login-button">ログイン</button>
+
+        <h2>🚀新規アクセス権限登録🌎</h2>
+        <input type="email" id="signup-email" placeholder="メールアドレス">
+        <input type="password" id="signup-password" placeholder="パスワード">
+        <button id="signup-button">登録</button>
+    </div>
+
+    <!-- コンテンツ画面（ログイン後表示） -->
+    <div id="content-container" style="display: none;">
+        <h1>バカチン<span>★</span>国際宇宙ステーション</h1>
+        <h2>～ 至急、国際宇宙ステーション（ISS）へ急行せよ！【リアルタイム距離＆気候情報】～</h2>
+        <p id="distanceInfo"></p>
+        <div id="weatherInfo">
+            <div>＠ISS</div>
+            <div id="issWeather">ISS位置の気候: 読み込み中...</div>
+            <div id="bakachinInfo">＠バカチンガー</div>
+            <div id="userWeather">バカチンガー位置の気候: 読み込み中...</div>
+        </div>
+        <div id="map"></div>
+        <div>
+            <li>【豆知識】ISSは約400km上空の軌道で約90分で地球を一周してるよ</li>
+        </div>
+        <button id="logout-button" style="display: none;">ログアウト</button>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+        import {
+            getAuth,
+            signInWithEmailAndPassword,
+            createUserWithEmailAndPassword,
+            onAuthStateChanged,
+            signOut
+        } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+        // Firebaseの設定
+        const firebaseConfig = {
+            apiKey: "",
+            authDomain: "",
+            databaseURL: "",
+            projectId: "",
+            storageBucket: "",
+            messagingSenderId: "",
+            appId: ""
+        };
+        // Firebaseを初期化
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth();
+
+        // ログイン関数
+        function loginUser(email, password) {
+            signInWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    // ログイン成功
+                    console.log("Logged in as: ", userCredential.user);
+                    $('#login-container').hide(); // ログインフォームを隠す
+                    $('#content-container').show(); // コンテンツ画面を表示
+                    $('#logout-button').show(); // ログアウトボタンを表示
+                })
+                .catch((error) => {
+                    //ログイン失敗
+                    console.error("Login failed: ", error);
+                });
+        }
+
+        // 新規登録関数
+        function signUpUser(email, password) {
+            createUserWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    // 新規登録成功
+                    console.log("Account created for: ", userCredential.user);
+                })
+                .catch((error) => {
+                    //新規登録失敗
+                    console.error("Error in account creation: ", error);
+                });
+        }
+
+        // ログイン状況確認
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // ログイン状態
+                console.log("User is logged in: ", user);
+            } else {
+                // ログアウト状態
+                console.log("User is logged out");
+            }
+        });
+
+        // ログアウト関数
+        function logoutUser() {
+            signOut(auth)
+                .then(() => {
+                    console.log("User logged out");
+                })
+                .catch((error) => {
+                    console.error("Error in logging out: ", error);
+                });
+        }
+
+        // ログイン状況に応じた表示
+        onAuthStateChanged(auth, (user) => {
+            //ログインしている場合
+            if (user) {
+                $('#login-container').hide();
+                $('#content-container').show();
+                $('#logout-button').show();
+                //ログアウトしている場合
+            } else {
+                $('#login-container').show();
+                $('#content-container').hide();
+                $('#logout-button').hide();
+            }
+        });
+
+        // ログインボタンのイベント
+        $('#login-button').on('click', function () {
+            const email = $('#login-email').val();
+            const password = $('#login-password').val();
+            loginUser(email, password);
+        });
+
+        // 新規登録ボタンのイベント
+        $('#signup-button').on('click', function () {
+            const email = $('#signup-email').val();
+            const password = $('#signup-password').val();
+            signUpUser(email, password);
+        });
+
+        // ログアウトボタンのイベント
+        $('#logout-button').on('click', function () {
+            logoutUser();
+        });
+    </script>
+
+    <script>
+        let map;
+        let issMarker, userMarker;
+        let issInfoWindow, userInfoWindow;
+        let issLat = 0;
+        let issLng = 0;
+        let userLat, userLng;
+
+        function initMap() {
+            map = new google.maps.Map($('#map')[0], {
+                center: { lat: 0, lng: 0 },
+                zoom: 2
+            });
+
+            issMarker = new google.maps.Marker({
+                position: { lat: 0, lng: 0 },
+                map: map,
+                title: '国際宇宙ステーション（ISS）'
+            });
+
+            issInfoWindow = new google.maps.InfoWindow({
+                content: '国際宇宙ステーション（ISS）'
+            });
+
+            issMarker.addListener('click', function () {
+                issInfoWindow.open(map, issMarker);
+            });
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    userLat = position.coords.latitude;
+                    userLng = position.coords.longitude;
+
+                    userMarker = new google.maps.Marker({
+                        position: { lat: userLat, lng: userLng },
+                        map: map,
+                        title: 'バカチンガー現在地'
+                    });
+
+                    userInfoWindow = new google.maps.InfoWindow({
+                        content: 'バカチンガー現在地'
+                    });
+
+                    userMarker.addListener('click', function () {
+                        userInfoWindow.open(map, userMarker);
+                    });
+
+                    updateISS();
+                }, function () {
+                    handleLocationError(true, map.getCenter());
+                });
+            } else {
+                // ブラウザがGeolocationをサポートしていない場合
+                handleLocationError(false, map.getCenter());
+            }
+        }
+
+        let line;
+
+        function updateISS() {
+            $.getJSON('http://api.open-notify.org/iss-now.json', function (data) {
+                issLat = parseFloat(data.iss_position.latitude);
+                issLng = parseFloat(data.iss_position.longitude);
+
+                issMarker.setPosition(new google.maps.LatLng(issLat, issLng));
+                map.panTo(new google.maps.LatLng(issLat, issLng));
+
+                issInfoWindow.setContent('国際宇宙ステーション（ISS）<br>緯度: ' + issLat.toFixed(2) + ', 経度: ' + issLng.toFixed(2));
+
+                if (userLat !== undefined && userLng !== undefined) {
+                    let distance = calculateDistance(userLat, userLng, issLat, issLng);
+                    $('#distanceInfo').text('バカチンガー到着まで..  ' + distance.toFixed(2) + ' km');
+
+                    // ライン作成・更新
+                    if (line) {
+                        line.setPath([
+                            { lat: userLat, lng: userLng },
+                            { lat: issLat, lng: issLng }
+                        ]);
+                    } else {
+                        line = new google.maps.Polyline({
+                            path: [
+                                { lat: userLat, lng: userLng },
+                                { lat: issLat, lng: issLng }
+                            ],
+                            geodesic: true,
+                            strokeColor: '#FF0000',
+                            strokeOpacity: 1.0,
+                            strokeWeight: 2,
+                            map: map
+                        });
+                    }
+                }
+
+                // ISSの天気情報取得＆表示
+                getWeather(issLat, issLng, "#issWeather");
+
+                // バカチンガーの天気情報取得＆表示
+                if (userLat !== undefined && userLng !== undefined) {
+                    getWeather(userLat, userLng, "#userWeather");
+                }
+            });
+
+            setTimeout(updateISS, 100000); // 5秒ごとに位置を更新
+        }
+
+        // 天気情報を取得＆表示関数
+        function getWeather(lat, lon, elementId) {
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
+
+            $.getJSON(url, function (data) {
+                if (data.current_weather) {
+                    const weather = data.current_weather;
+                    const temp = weather.temperature;
+                    const windspeed = weather.windspeed;
+                    $(elementId).text(`気温 ${temp}°C　風速 ${windspeed}km/h`);
+                } else {
+                    $(elementId).text("天気情報を取得できませんでした。");
+                }
+            });
+        }
+
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            let R = 6371; // 地球の半径(km)
+            let dLat = deg2rad(lat2 - lat1);
+            let dLon = deg2rad(lon2 - lon1);
+            let a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            let d = R * c; // 距離(km)
+            return d;
+        }
+
+        function deg2rad(deg) {
+            return deg * (Math.PI / 180)
+        }
+
+        function handleLocationError(browserHasGeolocation, pos) {
+            alert(browserHasGeolocation ?
+                'エラー: Geolocationサービスが失敗しました。' :
+                'エラー: お使いのブラウザはGeolocationをサポートしていません。');
+        }
+    </script>
+
+<!-- 要API KEY追加 -->
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=(ここにAPI_KEY追加)Q&callback=initMap">
+        </script>
+
+</body>
+
+</html>

@@ -1,0 +1,153 @@
+body {
+    font-family: 'Arial', sans-serif;
+    max-width: auto;
+    margin: auto;
+    text-align: center;
+    background-image: url(../image/bakachin_face.png);
+    background-color: rgba(255, 255, 255, 0.9);
+    background-blend-mode: lighten;
+    font-weight: bold;
+}
+
+h1 {
+    font-family: "Nico Moji";
+    font-size: 60px;
+    margin-top: 30px;
+    text-shadow: 1px 1px 0 #fff, 2px 2px 0 #000;
+}
+
+h1 span {
+    color: red;
+}
+
+h2 {
+    margin: 16px;
+    font-size: 30px;
+}
+
+#distanceInfo {
+    background-color: rgba(220, 220, 20, 1.0);
+    margin: 0 auto;
+    width: 40%;
+    padding: 10px;
+    border-radius: 20px;
+    border: groove 10.0px red;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    font-family: "Nico Moji";
+    font-size: 40px;
+    text-shadow: 1px 1px 0 #fff;
+}
+
+div li {
+    font-size: 30px;
+}
+
+#weatherInfo {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    align-items: center;
+    margin-top: 20px;
+    font-family: "Nico Moji";
+    font-size: 25px;
+}
+
+#issWeather,#userWeather {
+    color: white;
+    font-weight: bold;
+    text-shadow: 0.5px 0.5px 0 black;
+    background-color: #000;
+    border-radius: 5px;
+    width: 450px;
+}
+
+#bakachinInfo {
+    margin-left: 50px;
+}
+
+#map {
+    height: 600px;
+    width: 50%;
+    margin: 20px auto;
+    border: 20px groove darkblue;
+    border-radius: 10px;
+}
+
+body,
+input,
+button {
+    font-family: 'Arial', sans-serif;
+    color: #333;
+}
+
+#login-container {
+    background-color: black;
+    background-image: url(../image/3516880i.jfif);
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 80px;
+    max-width: 500px;
+    margin: 200px auto;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+#login-container h2 {
+    color: red;
+    background-color: black;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    font-size: 35px;
+    font-family: "Nico Moji";
+    text-align: center;
+    text-shadow: 1px 1px 0 #fff;
+}
+
+input[type=email],
+input[type=password] {
+    width: 90%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+button {
+    width: 30%;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    background-color: red;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+button:hover {
+    background-color: #3f51b5;
+}
+
+#logout-button {
+    width: 300px;
+        padding: 10px;
+        border: none;
+        border-radius: 4px;
+        background-color: #5c6bc0;
+        color: white;
+        cursor: pointer;
+        font-size: 16px;
+        margin-bottom: 10px;
+        
+    }
+
+#logout-button:hover {
+    background-color: #3f51b5;
+}
+
+@media screen and (max-width: 600px) {
+    #login-container {
+        width: 90%;
+        margin: 20px auto;
+    }
+}
